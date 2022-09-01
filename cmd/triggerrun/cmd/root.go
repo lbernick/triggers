@@ -129,7 +129,7 @@ func trigger(triggerFile, httpPath, action, kubeconfig string, writer io.Writer)
 			}
 		case "create":
 			{
-				err := r.CreateResources(tri.Namespace, "", resources, tri.Name, eventID, eventLog)
+				err := r.CreateResources(tri.Namespace, "", resources, tri.Name, eventID, nil, eventLog)
 				if err != nil {
 					return fmt.Errorf("fail to create resources: %w", err)
 				}
@@ -237,7 +237,7 @@ func processTriggerSpec(kubeClient kubernetes.Interface, client triggersclientse
 	}
 	log.Infof("ResolvedParams : %+v", params)
 
-	resources := template.ResolveResources(rt.TriggerTemplate, params)
+	resources, _ := template.ResolveResources(rt.TriggerTemplate, params)
 
 	return resources, nil
 }

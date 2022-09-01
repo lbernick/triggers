@@ -53,17 +53,22 @@ func ResolveParams(rt ResolvedTrigger, body []byte, header http.Header, extensio
 }
 
 // ResolveResources resolves a templated resource by replacing params with their values.
-func ResolveResources(template *triggersv1.TriggerTemplate, params []triggersv1.Param) []json.RawMessage {
+func ResolveResources(template *triggersv1.TriggerTemplate, params []triggersv1.Param) ([]json.RawMessage, map[string]string) {
 	resources := make([]json.RawMessage, len(template.Spec.ResourceTemplates))
 	uid := UUID()
 
 	oldEscape := metav1.HasAnnotation(template.ObjectMeta, OldEscapeAnnotation)
+	labels := make(map[string]string)
+	if template.Spec.Concurrency != nil {
+		concurrencyKey := applyParamsToConcurrencyKey(*template.Spec.Concurrency, params)
+		labels = map[string]string{"tekton.dev/concurrency": concurrencyKey}
+	}
 
 	for i := range template.Spec.ResourceTemplates {
 		resources[i] = applyParamsToResourceTemplate(params, template.Spec.ResourceTemplates[i].RawExtension.Raw, oldEscape)
 		resources[i] = applyUIDToResourceTemplate(resources[i], uid)
 	}
-	return resources
+	return resources, labels
 }
 
 // event represents a HTTP event that Triggers processes
@@ -131,4 +136,14 @@ func applyEventValuesToParams(params []triggersv1.Param, body []byte, header htt
 		allParamsMap[p.Name] = pValue
 	}
 	return convertParamMapToArray(allParamsMap), nil
+}
+
+func applyParamsToConcurrencyKey(c triggersv1.Concurrency, params []triggersv1.Param) string {
+	out := c.Key
+	for _, param := range params {
+		// Assume the param is valid
+		paramVariable := fmt.Sprintf("$(tt.params.%s)", param.Name)
+		out = strings.ReplaceAll(out, paramVariable, param.Value)
+	}
+	return out
 }

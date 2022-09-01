@@ -53,6 +53,7 @@ func (s *TriggerTemplateSpec) validate(ctx context.Context) (errs *apis.FieldErr
 	}
 	errs = errs.Also(validateResourceTemplates(s.ResourceTemplates).ViaField("resourcetemplates"))
 	errs = errs.Also(verifyParamDeclarations(s.Params, s.ResourceTemplates).ViaField("resourcetemplates"))
+	errs = errs.Also(validateConcurrency(s.Concurrency, s.Params).ViaField("concurrency"))
 	return errs
 }
 
@@ -107,4 +108,33 @@ func verifyParamDeclarations(params []ParamSpec, templates []TriggerResourceTemp
 	}
 
 	return nil
+}
+
+func validateConcurrency(c *Concurrency, params []ParamSpec) *apis.FieldError {
+	validStrategy := false
+	var errs *apis.FieldError
+	for _, s := range AllowedConcurrencyStrategies {
+		if c.Strategy == s {
+			validStrategy = true
+			break
+		}
+	}
+	if !validStrategy {
+		errs = errs.Also(apis.ErrInvalidValue(c.Strategy, "strategy", fmt.Sprintf("Invalid strategy, must be one of %s", AllowedConcurrencyStrategies)))
+	}
+	declaredParamNames := sets.NewString()
+	for _, param := range params {
+		declaredParamNames.Insert(param.Name)
+	}
+	keyParams := paramsRegexp.FindAllSubmatch([]byte(c.Key), -1)
+	for _, keyParam := range keyParams {
+		keyParamName := string(keyParam[1])
+		if !declaredParamNames.Has(keyParamName) {
+			fieldErr := apis.ErrInvalidValue(fmt.Sprintf("undeclared param '$(tt.params.%s)'", keyParamName), "")
+			fieldErr.Details = fmt.Sprintf("'$(tt.params.%s)' must be declared in spec.params", keyParamName)
+			errs = errs.Also(fieldErr)
+		}
+	}
+
+	return errs
 }

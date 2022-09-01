@@ -634,7 +634,7 @@ func TestResolveResources(t *testing.T) {
 			reader := bytes.NewReader([]byte("1111111111111111"))
 			uuid.SetRand(reader)
 			uuid.SetClockSequence(1)
-			got := ResolveResources(addOldEscape(tt.template), tt.params)
+			got, _ := ResolveResources(addOldEscape(tt.template), tt.params)
 			// Use toString so that it is easy to compare the json.RawMessage diffs
 			if diff := cmp.Diff(toString(tt.want), toString(got)); diff != "" {
 				t.Errorf("didn't get expected resource template -want + got: %s", diff)

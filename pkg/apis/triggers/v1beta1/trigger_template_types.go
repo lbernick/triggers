@@ -32,6 +32,8 @@ type TriggerTemplateSpec struct {
 	Params []ParamSpec `json:"params,omitempty"`
 	// +listType=atomic
 	ResourceTemplates []TriggerResourceTemplate `json:"resourcetemplates,omitempty"`
+	// +optional
+	Concurrency *Concurrency `json:"concurrency,omitempty"`
 }
 
 // TriggerResourceTemplate describes a resource to create
@@ -66,4 +68,13 @@ type TriggerTemplateList struct {
 	// +optional
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []TriggerTemplate `json:"items"`
+}
+
+var AllowedConcurrencyStrategies = []string{"Cancel", "CancelRunFinally", "StopRunFinally"}
+
+type Concurrency struct {
+	// +optional
+	Key string `json:"key,omitempty"`
+	// +optional
+	Strategy string `json:"strategy,omitempty"`
 }
