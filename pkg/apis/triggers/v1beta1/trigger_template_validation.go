@@ -90,6 +90,7 @@ func verifyParamDeclarations(params []ParamSpec, templates []TriggerResourceTemp
 	for _, param := range params {
 		declaredParamNames.Insert(param.Name)
 	}
+	var errs *apis.FieldError
 	for i, template := range templates {
 		// Get all params in the template $(tt.params.NAME)
 		templateParams := paramsRegexp.FindAllSubmatch(template.RawExtension.Raw, -1)
@@ -101,10 +102,10 @@ func verifyParamDeclarations(params []ParamSpec, templates []TriggerResourceTemp
 					fmt.Sprintf("[%d]", i),
 				)
 				fieldErr.Details = fmt.Sprintf("'$(tt.params.%s)' must be declared in spec.params", templateParamName)
-				return fieldErr
+				errs = errs.Also(fieldErr)
 			}
 		}
 	}
 
-	return nil
+	return errs
 }

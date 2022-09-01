@@ -50,7 +50,7 @@ func v1alpha1ResourceTemplate(t *testing.T) runtime.RawExtension {
 	})
 }
 
-func paramResourceTemplate(t *testing.T) runtime.RawExtension {
+func paramResourceTemplate(t *testing.T, param string) runtime.RawExtension {
 	return test.RawExtension(t, pipelinev1alpha1.PipelineRun{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "tekton.dev/v1alpha1",
@@ -63,26 +63,6 @@ func paramResourceTemplate(t *testing.T) runtime.RawExtension {
 					Value: pipelinev1alpha1.ArrayOrString{
 						Type:      pipelinev1alpha1.ParamTypeString,
 						StringVal: "$(tt.params.foo)",
-					},
-				},
-			},
-		},
-	})
-}
-
-func invalidParamResourceTemplate(t *testing.T) runtime.RawExtension {
-	return test.RawExtension(t, pipelinev1alpha1.PipelineRun{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "tekton.dev/v1alpha1",
-			Kind:       "PipelineRun",
-		},
-		Spec: pipelinev1alpha1.PipelineRunSpec{
-			Params: []pipelinev1alpha1.Param{
-				{
-					Name: "message",
-					Value: pipelinev1alpha1.ArrayOrString{
-						Type:      pipelinev1alpha1.ParamTypeString,
-						StringVal: "$(.foo)",
 					},
 				},
 			},
@@ -314,7 +294,7 @@ func TestTriggerTemplate_Validate(t *testing.T) {
 					Default:     ptr.String("val"),
 				}},
 				ResourceTemplates: []v1beta1.TriggerResourceTemplate{{
-					RawExtension: paramResourceTemplate(t),
+					RawExtension: paramResourceTemplate(t, "$(tt.params.foo)"),
 				}},
 			},
 		},
@@ -328,7 +308,27 @@ func TestTriggerTemplate_Validate(t *testing.T) {
 			},
 			Spec: v1beta1.TriggerTemplateSpec{
 				ResourceTemplates: []v1beta1.TriggerResourceTemplate{{
-					RawExtension: paramResourceTemplate(t),
+					RawExtension: paramResourceTemplate(t, "$(tt.params.foo)"),
+				}},
+			},
+		},
+		want: &apis.FieldError{
+			Message: "invalid value: undeclared param '$(tt.params.foo)'",
+			Paths:   []string{"spec.resourcetemplates[0]"},
+			Details: "'$(tt.params.foo)' must be declared in spec.params",
+		},
+	}, {
+		name: "tt.params used in multiple resource template are not declared",
+		template: &v1beta1.TriggerTemplate{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "tt",
+				Namespace: "foo",
+			},
+			Spec: v1beta1.TriggerTemplateSpec{
+				ResourceTemplates: []v1beta1.TriggerResourceTemplate{{
+					RawExtension: paramResourceTemplate(t, "$(tt.params.foo)"),
+				}, {
+					RawExtension: paramResourceTemplate(t, "$(tt.params.bar)"),
 				}},
 			},
 		},
@@ -346,7 +346,7 @@ func TestTriggerTemplate_Validate(t *testing.T) {
 			},
 			Spec: v1beta1.TriggerTemplateSpec{
 				ResourceTemplates: []v1beta1.TriggerResourceTemplate{{
-					RawExtension: invalidParamResourceTemplate(t),
+					RawExtension: paramResourceTemplate(t, "$(.foo)"),
 				}},
 			},
 		},
@@ -365,7 +365,7 @@ func TestTriggerTemplate_Validate(t *testing.T) {
 					Default:     ptr.String("val"),
 				}},
 				ResourceTemplates: []v1beta1.TriggerResourceTemplate{{
-					RawExtension: invalidParamResourceTemplate(t),
+					RawExtension: paramResourceTemplate(t, "$(.foo)"),
 				}},
 			},
 		},
