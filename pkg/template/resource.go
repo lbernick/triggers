@@ -37,15 +37,17 @@ type ResolvedTrigger struct {
 	ClusterTriggerBindings []*triggersv1.ClusterTriggerBinding
 	TriggerTemplate        *triggersv1.TriggerTemplate
 	BindingParams          []triggersv1.Param
+	Concurrency            *triggersv1.ConcurrencyControl
 }
 
 type getTriggerBinding func(name string) (*triggersv1.TriggerBinding, error)
 type getTriggerTemplate func(name string) (*triggersv1.TriggerTemplate, error)
 type getClusterTriggerBinding func(name string) (*triggersv1.ClusterTriggerBinding, error)
+type getConcurrencyControl func(name string) (*triggersv1.ConcurrencyControl, error)
 
 // ResolveTrigger takes in a trigger containing object refs to bindings and
 // templates and resolves them to their underlying values.
-func ResolveTrigger(trigger triggersv1.Trigger, getTB getTriggerBinding, getCTB getClusterTriggerBinding, getTT getTriggerTemplate) (ResolvedTrigger, error) {
+func ResolveTrigger(trigger triggersv1.Trigger, getTB getTriggerBinding, getCTB getClusterTriggerBinding, getTT getTriggerTemplate, getCC getConcurrencyControl) (ResolvedTrigger, error) {
 	bp, err := resolveBindingsToParams(trigger.Spec.Bindings, getTB, getCTB)
 	if err != nil {
 		return ResolvedTrigger{}, fmt.Errorf("failed to resolve bindings: %w", err)
@@ -68,7 +70,24 @@ func ResolveTrigger(trigger triggersv1.Trigger, getTB getTriggerBinding, getCTB 
 		}
 	}
 
-	return ResolvedTrigger{TriggerTemplate: resolvedTT, BindingParams: bp}, nil
+	var resolvedCC *triggersv1.ConcurrencyControl
+	/*
+		if trigger.Spec.Concurrency != nil {
+			if trigger.Spec.Concurrency.Spec != nil {
+				resolvedCC = &triggersv1.ConcurrencyControl{
+					ObjectMeta: metav1.ObjectMeta{},
+					Spec:       *trigger.Spec.Concurrency.Spec,
+				}
+				// TODO: how to create the concurrency control object??
+			} else {
+				resolvedCC, err = getCC(trigger.Spec.Concurrency.Ref)
+				if err != nil {
+					return ResolvedTrigger{}, err
+				}
+			}
+		} */
+
+	return ResolvedTrigger{TriggerTemplate: resolvedTT, BindingParams: bp, Concurrency: resolvedCC}, nil
 }
 
 // resolveBindingsToParams takes in both embedded bindings and references and returns a list of resolved Param values.ResolveBindingsToParams

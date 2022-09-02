@@ -31,8 +31,9 @@
 # Emacs garbage
 *~
 
-# VSCode config
+# VSCode 
 .vscode
+*__debug_bin
 
 # JetBrains IDE config
 .idea

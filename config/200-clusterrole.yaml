@@ -30,7 +30,7 @@ rules:
     resources: ["mutatingwebhookconfigurations", "validatingwebhookconfigurations"]
     verbs: ["get", "list", "create", "update", "delete", "patch", "watch"]
   - apiGroups: ["triggers.tekton.dev"]
-    resources: ["clustertriggerbindings", "clusterinterceptors", "eventlisteners", "triggerbindings", "triggertemplates", "triggers", "eventlisteners/finalizers"]
+    resources: ["clustertriggerbindings", "clusterinterceptors", "eventlisteners", "triggerbindings", "triggertemplates", "triggers", "eventlisteners/finalizers", "concurrencycontrols"]
     verbs: ["get", "list", "create", "update", "delete", "patch", "watch"]
   - apiGroups: ["triggers.tekton.dev"]
     resources: ["clustertriggerbindings/status", "clusterinterceptors/status", "eventlisteners/status", "triggerbindings/status", "triggertemplates/status", "triggers/status"]

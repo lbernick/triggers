@@ -20,6 +20,8 @@ package v1beta1
 
 type ClusterTriggerBindingExpansion interface{}
 
+type ConcurrencyControlExpansion interface{}
+
 type EventListenerExpansion interface{}
 
 type TriggerExpansion interface{}

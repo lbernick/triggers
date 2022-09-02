@@ -141,6 +141,24 @@ func Test_EventListenerValidate(t *testing.T) {
 			},
 		},
 	}, {
+		name: "Valid EventListener with TriggerBinding and concurrency",
+		el: &triggersv1beta1.EventListener{
+			ObjectMeta: myObjectMeta,
+			Spec: triggersv1beta1.EventListenerSpec{
+				Triggers: []triggersv1beta1.EventListenerTrigger{{
+					Bindings: []*triggersv1beta1.EventListenerBinding{{
+						Ref:        "tb",
+						Kind:       triggersv1beta1.NamespacedTriggerBindingKind,
+						APIVersion: "triggersv1beta1", // TODO: APIVersions seem wrong?
+					}},
+					Template: &triggersv1beta1.EventListenerTemplate{
+						Ref: ptr.String("tt2"),
+					},
+					Concurrency: &triggersv1beta1.Concurrency{Ref: "pull-requests-concurrency"},
+				}},
+			},
+		},
+	}, {
 		name: "Valid EventListener with ClusterTriggerBinding",
 		el: &triggersv1beta1.EventListener{
 			ObjectMeta: myObjectMeta,

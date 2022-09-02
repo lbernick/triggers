@@ -109,7 +109,7 @@ func trigger(triggerFile, httpPath, action, kubeconfig string, writer io.Writer)
 	r := newSink(ctx, config)
 	eventLog := logger.With(zap.String(triggers.EventIDLabelKey, eventID))
 	for _, tri := range triggerConfigs {
-		resources, err := processTriggerSpec(kubeClient, triggerClient, tri,
+		resources, labels, err := processTriggerSpec(kubeClient, triggerClient, tri,
 			request, body, eventID, eventLog, r)
 		if err != nil {
 			return fmt.Errorf("fail to create resources: %w", err)
@@ -129,7 +129,7 @@ func trigger(triggerFile, httpPath, action, kubeconfig string, writer io.Writer)
 			}
 		case "create":
 			{
-				err := r.CreateResources(tri.Namespace, "", resources, tri.Name, eventID, eventLog)
+				err := r.CreateResources(tri.Namespace, "", resources, tri.Name, eventID, labels, nil, eventLog)
 				if err != nil {
 					return fmt.Errorf("fail to create resources: %w", err)
 				}
@@ -190,9 +190,9 @@ func readHTTP(path string) (*http.Request, []byte, error) {
 	return request, body, err
 }
 
-func processTriggerSpec(kubeClient kubernetes.Interface, client triggersclientset.Interface, tri *triggersv1.Trigger, request *http.Request, body []byte, eventID string, eventLog *zap.SugaredLogger, r sink.Sink) ([]json.RawMessage, error) {
+func processTriggerSpec(kubeClient kubernetes.Interface, client triggersclientset.Interface, tri *triggersv1.Trigger, request *http.Request, body []byte, eventID string, eventLog *zap.SugaredLogger, r sink.Sink) ([]json.RawMessage, map[string]string, error) {
 	if tri == nil {
-		return nil, errors.New("trigger is not defined")
+		return nil, nil, errors.New("trigger is not defined")
 	}
 
 	log := eventLog.With(zap.String(triggers.TriggerLabelKey, r.EventListenerName))
@@ -200,7 +200,7 @@ func processTriggerSpec(kubeClient kubernetes.Interface, client triggersclientse
 	finalPayload, header, iresp, err := r.ExecuteTriggerInterceptors(*tri, request, body, log, eventID, map[string]interface{}{})
 	if err != nil {
 		log.Error(err)
-		return nil, err
+		return nil, nil, err
 	}
 	if iresp != nil {
 		if !iresp.Continue {
@@ -221,25 +221,28 @@ func processTriggerSpec(kubeClient kubernetes.Interface, client triggersclientse
 		},
 		func(name string) (*triggersv1.TriggerTemplate, error) {
 			return client.TriggersV1beta1().TriggerTemplates(tri.Namespace).Get(context.Background(), name, metav1.GetOptions{})
+		}, func(name string) (*triggersv1.ConcurrencyControl, error) {
+			return client.TriggersV1beta1().ConcurrencyControls(tri.Namespace).Get(context.Background(), name, metav1.GetOptions{})
 		})
 	if err != nil {
 		log.Error("Failed to resolve Trigger: ", err)
-		return nil, err
+		return nil, nil, err
 	}
 	extensions := map[string]interface{}{}
 	if iresp != nil && iresp.Extensions != nil {
 		extensions = iresp.Extensions
 	}
 	params, err := template.ResolveParams(rt, finalPayload, header, extensions)
+	// TODO: get concurrency key from params
 	if err != nil {
 		log.Error("Failed to resolve parameters", err)
-		return nil, err
+		return nil, nil, err
 	}
 	log.Infof("ResolvedParams : %+v", params)
 
 	resources := template.ResolveResources(rt.TriggerTemplate, params)
 
-	return resources, nil
+	return resources, map[string]string{"concurrency": "$(params.repo-full-name)"}, nil
 }
 
 func newSink(ctx context.Context, config *rest.Config) sink.Sink {

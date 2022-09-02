@@ -26,6 +26,8 @@ import (
 type Interface interface {
 	// ClusterTriggerBindings returns a ClusterTriggerBindingInformer.
 	ClusterTriggerBindings() ClusterTriggerBindingInformer
+	// ConcurrencyControls returns a ConcurrencyControlInformer.
+	ConcurrencyControls() ConcurrencyControlInformer
 	// EventListeners returns a EventListenerInformer.
 	EventListeners() EventListenerInformer
 	// Triggers returns a TriggerInformer.
@@ -50,6 +52,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // ClusterTriggerBindings returns a ClusterTriggerBindingInformer.
 func (v *version) ClusterTriggerBindings() ClusterTriggerBindingInformer {
 	return &clusterTriggerBindingInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// ConcurrencyControls returns a ConcurrencyControlInformer.
+func (v *version) ConcurrencyControls() ConcurrencyControlInformer {
+	return &concurrencyControlInformer{factory: v.factory, namespace: v.namespace, tweakListOptions: v.tweakListOptions}
 }
 
 // EventListeners returns a EventListenerInformer.

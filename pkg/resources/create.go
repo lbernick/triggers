@@ -63,13 +63,14 @@ func findAPIResource(apiVersion, kind string, c discoveryclient.ServerResourcesI
 
 // Create uses the kubeClient to create the resource defined in the
 // TriggerResourceTemplate and returns any errors with this process
-func Create(logger *zap.SugaredLogger, rt json.RawMessage, triggerName, eventID, elName, elNamespace string, c discoveryclient.ServerResourcesInterface, dc dynamic.Interface) error {
+func Create(logger *zap.SugaredLogger, rt json.RawMessage, triggerName, eventID, elName, elNamespace string, labels map[string]string, ownerRef *metav1.OwnerReference, c discoveryclient.ServerResourcesInterface, dc dynamic.Interface) error {
 	// Assume the TriggerResourceTemplate is valid (it has an apiVersion and Kind)
 	data := new(unstructured.Unstructured)
 	if err := data.UnmarshalJSON(rt); err != nil {
 		return fmt.Errorf("couldn't unmarshal json from the TriggerTemplate: %v", err)
 	}
 
+	// TODO: pass these in as additional labels since there's only one call site
 	data, err := addLabels(data, map[string]string{
 		triggers.EventListenerLabelKey: elName,
 		triggers.EventIDLabelKey:       eventID,
@@ -77,6 +78,15 @@ func Create(logger *zap.SugaredLogger, rt json.RawMessage, triggerName, eventID,
 	})
 	if err != nil {
 		return err
+	}
+	// TODO: concurrency label shouldn't be prefixed with "triggers"
+	data, err = addLabels(data, labels)
+	if err != nil {
+		return err
+	}
+
+	if ownerRef != nil {
+		data.SetOwnerReferences([]metav1.OwnerReference{*ownerRef})
 	}
 
 	namespace := data.GetNamespace()
@@ -95,7 +105,9 @@ func Create(logger *zap.SugaredLogger, rt json.RawMessage, triggerName, eventID,
 	if name == "" {
 		name = data.GetGenerateName()
 	}
-	logger.Infof("Generating resource: kind: %s, name: %s", apiResource, name)
+	ors := data.GetOwnerReferences()
+	lbls := data.GetLabels()
+	logger.Infof("Generating resource: kind: %s, name: %s, ownerRefs %s, labels %s", apiResource, name, ors, lbls)
 
 	gvr := schema.GroupVersionResource{
 		Group:    apiResource.Group,

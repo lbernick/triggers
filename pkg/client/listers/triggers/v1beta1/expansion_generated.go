@@ -22,6 +22,14 @@ package v1beta1
 // ClusterTriggerBindingLister.
 type ClusterTriggerBindingListerExpansion interface{}
 
+// ConcurrencyControlListerExpansion allows custom methods to be added to
+// ConcurrencyControlLister.
+type ConcurrencyControlListerExpansion interface{}
+
+// ConcurrencyControlNamespaceListerExpansion allows custom methods to be added to
+// ConcurrencyControlNamespaceLister.
+type ConcurrencyControlNamespaceListerExpansion interface{}
+
 // EventListenerListerExpansion allows custom methods to be added to
 // EventListenerLister.
 type EventListenerListerExpansion interface{}

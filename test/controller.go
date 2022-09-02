@@ -33,6 +33,7 @@ import (
 	faketriggersclient "github.com/tektoncd/triggers/pkg/client/injection/client/fake"
 	fakeClusterInterceptorinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/clusterinterceptor/fake"
 	fakeclustertriggerbindinginformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/clustertriggerbinding/fake"
+	fakeconcurrencycontrolinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/concurrencycontrol/fake"
 	fakeeventlistenerinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/eventlistener/fake"
 	faketriggerinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/trigger/fake"
 	faketriggerbindinginformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/triggerbinding/fake"
@@ -84,6 +85,7 @@ type Resources struct {
 	ServiceAccounts        []*corev1.ServiceAccount
 	Pods                   []*corev1.Pod
 	WithPod                []*duckv1.WithPod
+	ConcurrencyControls    []*v1beta1.ConcurrencyControl
 }
 
 // Clients holds references to clients which are useful for reconciler tests.
@@ -148,6 +150,7 @@ func SeedResources(t *testing.T, ctx context.Context, r Resources) Clients {
 	saInformer := fakeserviceaccountinformer.Get(ctx)
 	podInformer := fakepodinformer.Get(ctx)
 	duckInformerFactory := duckinformerfake.Get(ctx)
+	ccInformer := fakeconcurrencycontrolinformer.Get(ctx)
 
 	// Create Namespaces
 	for _, ns := range r.Namespaces {
@@ -266,6 +269,14 @@ func SeedResources(t *testing.T, ctx context.Context, r Resources) Clients {
 		}
 		dynamicInterface := c.DynamicClient.Resource(gvr)
 		if _, err := dynamicInterface.Namespace(data.GetNamespace()).Create(context.Background(), data, metav1.CreateOptions{}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, cc := range r.ConcurrencyControls {
+		if err := ccInformer.Informer().GetIndexer().Add(cc); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := c.Triggers.TriggersV1beta1().ConcurrencyControls(cc.Namespace).Create(context.Background(), cc, metav1.CreateOptions{}); err != nil {
 			t.Fatal(err)
 		}
 	}

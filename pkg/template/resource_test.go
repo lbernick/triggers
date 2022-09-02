@@ -288,6 +288,9 @@ var (
 		}
 		return nil, fmt.Errorf("error invalid name: %s", name)
 	}
+	getCC = func(name string) (*triggersv1.ConcurrencyControl, error) {
+		return nil, nil
+	}
 )
 
 func Test_ResolveTrigger(t *testing.T) {
@@ -508,7 +511,7 @@ func Test_ResolveTrigger(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := ResolveTrigger(tc.trigger, getTB, getCTB, getTT)
+			got, err := ResolveTrigger(tc.trigger, getTB, getCTB, getTT, getCC)
 			if err != nil {
 				t.Errorf("ResolveTrigger() returned unexpected error: %s", err)
 			} else if diff := cmp.Diff(tc.want, got); diff != "" {
@@ -641,7 +644,7 @@ func Test_ResolveTrigger_error(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if _, err := ResolveTrigger(tt.trigger, tt.getTB, tt.getCTB, tt.getTT); err == nil {
+			if _, err := ResolveTrigger(tt.trigger, tt.getTB, tt.getCTB, tt.getTT, getCC); err == nil {
 				t.Error("ResolveTrigger() did not return error when expected")
 			}
 		})

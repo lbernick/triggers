@@ -1033,6 +1033,137 @@ func (w *wrapTriggersV1beta1ClusterTriggerBindingImpl) Watch(ctx context.Context
 	return nil, errors.New("NYI: Watch")
 }
 
+func (w *wrapTriggersV1beta1) ConcurrencyControls(namespace string) typedtriggersv1beta1.ConcurrencyControlInterface {
+	return &wrapTriggersV1beta1ConcurrencyControlImpl{
+		dyn: w.dyn.Resource(schema.GroupVersionResource{
+			Group:    "triggers.tekton.dev",
+			Version:  "v1beta1",
+			Resource: "concurrencycontrols",
+		}),
+
+		namespace: namespace,
+	}
+}
+
+type wrapTriggersV1beta1ConcurrencyControlImpl struct {
+	dyn dynamic.NamespaceableResourceInterface
+
+	namespace string
+}
+
+var _ typedtriggersv1beta1.ConcurrencyControlInterface = (*wrapTriggersV1beta1ConcurrencyControlImpl)(nil)
+
+func (w *wrapTriggersV1beta1ConcurrencyControlImpl) Create(ctx context.Context, in *v1beta1.ConcurrencyControl, opts v1.CreateOptions) (*v1beta1.ConcurrencyControl, error) {
+	in.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "triggers.tekton.dev",
+		Version: "v1beta1",
+		Kind:    "ConcurrencyControl",
+	})
+	uo := &unstructured.Unstructured{}
+	if err := convert(in, uo); err != nil {
+		return nil, err
+	}
+	uo, err := w.dyn.Namespace(w.namespace).Create(ctx, uo, opts)
+	if err != nil {
+		return nil, err
+	}
+	out := &v1beta1.ConcurrencyControl{}
+	if err := convert(uo, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (w *wrapTriggersV1beta1ConcurrencyControlImpl) Delete(ctx context.Context, name string, opts v1.DeleteOptions) error {
+	return w.dyn.Namespace(w.namespace).Delete(ctx, name, opts)
+}
+
+func (w *wrapTriggersV1beta1ConcurrencyControlImpl) DeleteCollection(ctx context.Context, opts v1.DeleteOptions, listOpts v1.ListOptions) error {
+	return w.dyn.Namespace(w.namespace).DeleteCollection(ctx, opts, listOpts)
+}
+
+func (w *wrapTriggersV1beta1ConcurrencyControlImpl) Get(ctx context.Context, name string, opts v1.GetOptions) (*v1beta1.ConcurrencyControl, error) {
+	uo, err := w.dyn.Namespace(w.namespace).Get(ctx, name, opts)
+	if err != nil {
+		return nil, err
+	}
+	out := &v1beta1.ConcurrencyControl{}
+	if err := convert(uo, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (w *wrapTriggersV1beta1ConcurrencyControlImpl) List(ctx context.Context, opts v1.ListOptions) (*v1beta1.ConcurrencyControlList, error) {
+	uo, err := w.dyn.Namespace(w.namespace).List(ctx, opts)
+	if err != nil {
+		return nil, err
+	}
+	out := &v1beta1.ConcurrencyControlList{}
+	if err := convert(uo, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (w *wrapTriggersV1beta1ConcurrencyControlImpl) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (result *v1beta1.ConcurrencyControl, err error) {
+	uo, err := w.dyn.Namespace(w.namespace).Patch(ctx, name, pt, data, opts)
+	if err != nil {
+		return nil, err
+	}
+	out := &v1beta1.ConcurrencyControl{}
+	if err := convert(uo, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (w *wrapTriggersV1beta1ConcurrencyControlImpl) Update(ctx context.Context, in *v1beta1.ConcurrencyControl, opts v1.UpdateOptions) (*v1beta1.ConcurrencyControl, error) {
+	in.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "triggers.tekton.dev",
+		Version: "v1beta1",
+		Kind:    "ConcurrencyControl",
+	})
+	uo := &unstructured.Unstructured{}
+	if err := convert(in, uo); err != nil {
+		return nil, err
+	}
+	uo, err := w.dyn.Namespace(w.namespace).Update(ctx, uo, opts)
+	if err != nil {
+		return nil, err
+	}
+	out := &v1beta1.ConcurrencyControl{}
+	if err := convert(uo, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (w *wrapTriggersV1beta1ConcurrencyControlImpl) UpdateStatus(ctx context.Context, in *v1beta1.ConcurrencyControl, opts v1.UpdateOptions) (*v1beta1.ConcurrencyControl, error) {
+	in.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   "triggers.tekton.dev",
+		Version: "v1beta1",
+		Kind:    "ConcurrencyControl",
+	})
+	uo := &unstructured.Unstructured{}
+	if err := convert(in, uo); err != nil {
+		return nil, err
+	}
+	uo, err := w.dyn.Namespace(w.namespace).UpdateStatus(ctx, uo, opts)
+	if err != nil {
+		return nil, err
+	}
+	out := &v1beta1.ConcurrencyControl{}
+	if err := convert(uo, out); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (w *wrapTriggersV1beta1ConcurrencyControlImpl) Watch(ctx context.Context, opts v1.ListOptions) (watch.Interface, error) {
+	return nil, errors.New("NYI: Watch")
+}
+
 func (w *wrapTriggersV1beta1) EventListeners(namespace string) typedtriggersv1beta1.EventListenerInterface {
 	return &wrapTriggersV1beta1EventListenerImpl{
 		dyn: w.dyn.Resource(schema.GroupVersionResource{

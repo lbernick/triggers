@@ -32,6 +32,10 @@ func (c *FakeTriggersV1beta1) ClusterTriggerBindings() v1beta1.ClusterTriggerBin
 	return &FakeClusterTriggerBindings{c}
 }
 
+func (c *FakeTriggersV1beta1) ConcurrencyControls(namespace string) v1beta1.ConcurrencyControlInterface {
+	return &FakeConcurrencyControls{c, namespace}
+}
+
 func (c *FakeTriggersV1beta1) EventListeners(namespace string) v1beta1.EventListenerInterface {
 	return &FakeEventListeners{c, namespace}
 }

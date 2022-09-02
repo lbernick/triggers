@@ -35,6 +35,10 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.CELOverlay":                   schema_pkg_apis_triggers_v1beta1_CELOverlay(ref),
 		"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ClusterTriggerBinding":        schema_pkg_apis_triggers_v1beta1_ClusterTriggerBinding(ref),
 		"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ClusterTriggerBindingList":    schema_pkg_apis_triggers_v1beta1_ClusterTriggerBindingList(ref),
+		"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.Concurrency":                  schema_pkg_apis_triggers_v1beta1_Concurrency(ref),
+		"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ConcurrencyControl":           schema_pkg_apis_triggers_v1beta1_ConcurrencyControl(ref),
+		"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ConcurrencyControlList":       schema_pkg_apis_triggers_v1beta1_ConcurrencyControlList(ref),
+		"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ConcurrencySpec":              schema_pkg_apis_triggers_v1beta1_ConcurrencySpec(ref),
 		"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.CustomResource":               schema_pkg_apis_triggers_v1beta1_CustomResource(ref),
 		"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.EventListener":                schema_pkg_apis_triggers_v1beta1_EventListener(ref),
 		"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.EventListenerConfig":          schema_pkg_apis_triggers_v1beta1_EventListenerConfig(ref),
@@ -275,6 +279,165 @@ func schema_pkg_apis_triggers_v1beta1_ClusterTriggerBindingList(ref common.Refer
 		},
 		Dependencies: []string{
 			"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ClusterTriggerBinding", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_triggers_v1beta1_Concurrency(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Concurrency defines a reference to a ConcurrencyControl",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"ref": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ConcurrencySpec"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ConcurrencySpec"},
+	}
+}
+
+func schema_pkg_apis_triggers_v1beta1_ConcurrencyControl(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ConcurrencySpec"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ConcurrencySpec", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_triggers_v1beta1_ConcurrencyControlList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ConcurrencyControl"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ConcurrencyControl", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_triggers_v1beta1_ConcurrencySpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"params": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ParamSpec"),
+									},
+								},
+							},
+						},
+					},
+					"key": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"strategy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.ParamSpec"},
 	}
 }
 
@@ -624,11 +787,16 @@ func schema_pkg_apis_triggers_v1beta1_EventListenerTrigger(ref common.ReferenceC
 							Format:      "",
 						},
 					},
+					"concurrency": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.Concurrency"),
+						},
+					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerInterceptor", "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerSpecBinding", "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerSpecTemplate"},
+			"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.Concurrency", "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerInterceptor", "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerSpecBinding", "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerSpecTemplate"},
 	}
 }
 
@@ -1596,12 +1764,17 @@ func schema_pkg_apis_triggers_v1beta1_TriggerSpec(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
+					"concurrency": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.Concurrency"),
+						},
+					},
 				},
 				Required: []string{"bindings", "template"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerInterceptor", "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerSpecBinding", "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerSpecTemplate"},
+			"github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.Concurrency", "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerInterceptor", "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerSpecBinding", "github.com/tektoncd/triggers/pkg/apis/triggers/v1beta1.TriggerSpecTemplate"},
 	}
 }
 

@@ -70,6 +70,8 @@ func (f *sharedInformerFactory) ForResource(resource schema.GroupVersionResource
 		// Group=triggers.tekton.dev, Version=v1beta1
 	case v1beta1.SchemeGroupVersion.WithResource("clustertriggerbindings"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Triggers().V1beta1().ClusterTriggerBindings().Informer()}, nil
+	case v1beta1.SchemeGroupVersion.WithResource("concurrencycontrols"):
+		return &genericInformer{resource: resource.GroupResource(), informer: f.Triggers().V1beta1().ConcurrencyControls().Informer()}, nil
 	case v1beta1.SchemeGroupVersion.WithResource("eventlisteners"):
 		return &genericInformer{resource: resource.GroupResource(), informer: f.Triggers().V1beta1().EventListeners().Informer()}, nil
 	case v1beta1.SchemeGroupVersion.WithResource("triggers"):

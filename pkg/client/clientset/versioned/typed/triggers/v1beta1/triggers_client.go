@@ -29,6 +29,7 @@ import (
 type TriggersV1beta1Interface interface {
 	RESTClient() rest.Interface
 	ClusterTriggerBindingsGetter
+	ConcurrencyControlsGetter
 	EventListenersGetter
 	TriggersGetter
 	TriggerBindingsGetter
@@ -42,6 +43,10 @@ type TriggersV1beta1Client struct {
 
 func (c *TriggersV1beta1Client) ClusterTriggerBindings() ClusterTriggerBindingInterface {
 	return newClusterTriggerBindings(c)
+}
+
+func (c *TriggersV1beta1Client) ConcurrencyControls(namespace string) ConcurrencyControlInterface {
+	return newConcurrencyControls(c, namespace)
 }
 
 func (c *TriggersV1beta1Client) EventListeners(namespace string) EventListenerInterface {

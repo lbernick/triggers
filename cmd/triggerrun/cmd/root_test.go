@@ -237,7 +237,7 @@ func Test_processTriggerSpec(t *testing.T) {
 				HTTPClient:        http.DefaultClient,
 				WGProcessTriggers: &sync.WaitGroup{},
 			}
-			got, err := processTriggerSpec(kubeClient, triggerClient, tt.args.t, tt.args.request, tt.args.event, eventID, logger, s)
+			got, _, err := processTriggerSpec(kubeClient, triggerClient, tt.args.t, tt.args.request, tt.args.event, eventID, logger, s)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("processTriggerSpec() error = %v. wantErr %v", err, tt.wantErr)
 				return

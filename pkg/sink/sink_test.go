@@ -39,6 +39,7 @@ import (
 	"github.com/tektoncd/triggers/pkg/client/dynamic/clientset/tekton"
 	interceptorinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/clusterinterceptor"
 	clustertriggerbindinginformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/clustertriggerbinding"
+	concurrencycontrolinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/concurrencycontrol"
 	eventlistenerinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/eventlistener"
 	triggerinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/trigger"
 	triggerbindinginformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/triggerbinding"
@@ -155,6 +156,7 @@ func getSinkAssets(t *testing.T, res test.Resources, elName string, webhookInter
 		Recorder:                    recorder,
 		EventListenerLister:         eventlistenerinformer.Get(ctx).Lister(),
 		TriggerLister:               triggerinformer.Get(ctx).Lister(),
+		ConcurrencyLister:           concurrencycontrolinformer.Get(ctx).Lister(),
 		TriggerBindingLister:        triggerbindinginformer.Get(ctx).Lister(),
 		ClusterTriggerBindingLister: clustertriggerbindinginformer.Get(ctx).Lister(),
 		TriggerTemplateLister:       triggertemplateinformer.Get(ctx).Lister(),
@@ -417,6 +419,66 @@ func TestHandleEvent(t *testing.T) {
 		},
 		eventBody: eventBody,
 		want:      []pipelinev1.TaskRun{gitCloneTaskRun},
+	}, {
+		name: "single trigger with concurrencycontrol embedded within EventListener",
+		resources: test.Resources{
+			EventListeners: []*triggersv1beta1.EventListener{{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      eventListenerName,
+					Namespace: namespace,
+					UID:       types.UID(elUID),
+				},
+				Spec: triggersv1beta1.EventListenerSpec{
+					Triggers: []triggersv1beta1.EventListenerTrigger{{
+						Name: "git-clone-trigger",
+						Bindings: []*triggersv1beta1.EventListenerBinding{{
+							Ref:  "git-clone",
+							Kind: triggersv1beta1.NamespacedTriggerBindingKind,
+						}},
+						Template: &triggersv1beta1.EventListenerTemplate{
+							Ref: ptr.String("git-clone"),
+						},
+						Concurrency: &triggersv1beta1.Concurrency{Ref: "pull-requests"},
+					}},
+				},
+			}},
+			TriggerBindings:  []*triggersv1beta1.TriggerBinding{gitCloneTB},
+			TriggerTemplates: []*triggersv1beta1.TriggerTemplate{gitCloneTT},
+			ConcurrencyControls: []*triggersv1beta1.ConcurrencyControl{{
+				ObjectMeta: metav1.ObjectMeta{Name: "pull-requests", Namespace: namespace},
+				Spec:       triggersv1beta1.ConcurrencySpec{Key: "key", Strategy: "strategy"},
+			}},
+		},
+		eventBody: eventBody,
+		want: []pipelinev1.TaskRun{{
+			TypeMeta: metav1.TypeMeta{
+				APIVersion: "tekton.dev/v1beta1",
+				Kind:       "TaskRun",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "git-clone-run",
+				Namespace: namespace,
+				Labels: map[string]string{
+					"app":                                  "bar\t\r\nbaz昨",
+					"type":                                 "application/json",
+					"triggers.tekton.dev/concurrency":      "key",
+					"triggers.tekton.dev/eventlistener":    eventListenerName,
+					"triggers.tekton.dev/trigger":          "git-clone-trigger",
+					"triggers.tekton.dev/triggers-eventid": "12345",
+				},
+				OwnerReferences: []metav1.OwnerReference{{Name: "pull-requests", APIVersion: "triggers.tekton.dev/v1beta1", Kind: "ConcurrencyControl"}},
+			},
+			Spec: pipelinev1.TaskRunSpec{
+				Params: []pipelinev1.Param{{
+					Name:  "url",
+					Value: pipelinev1.ArrayOrString{Type: pipelinev1.ParamTypeString, StringVal: "testurl"},
+				}, {
+					Name:  "git-revision",
+					Value: pipelinev1.ArrayOrString{Type: pipelinev1.ParamTypeString, StringVal: "testrevision"},
+				}},
+				TaskRef: &pipelinev1.TaskRef{Name: "git-clone"},
+			},
+		}},
 	}, {
 		name: "namespace selector match names",
 		resources: test.Resources{

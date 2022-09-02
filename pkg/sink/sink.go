@@ -78,6 +78,7 @@ type Sink struct {
 	ClusterTriggerBindingLister listers.ClusterTriggerBindingLister
 	TriggerTemplateLister       listers.TriggerTemplateLister
 	ClusterInterceptorLister    listersv1alpha1.ClusterInterceptorLister
+	ConcurrencyLister           listers.ConcurrencyControlLister
 }
 
 // Response defines the HTTP body that the Sink responds to events with.
@@ -271,6 +272,7 @@ func (r Sink) merge(et []triggersv1.EventListenerTrigger, trItems []*triggersv1.
 					Bindings:           t.Bindings,
 					Template:           *t.Template,
 					Interceptors:       t.Interceptors,
+					Concurrency:        t.Concurrency,
 				},
 			})
 		default:
@@ -392,7 +394,8 @@ func (r Sink) processTrigger(t triggersv1.Trigger, el *triggersv1.EventListener,
 	rt, err := template.ResolveTrigger(t,
 		r.TriggerBindingLister.TriggerBindings(t.Namespace).Get,
 		r.ClusterTriggerBindingLister.Get,
-		r.TriggerTemplateLister.TriggerTemplates(t.Namespace).Get)
+		r.TriggerTemplateLister.TriggerTemplates(t.Namespace).Get,
+		r.ConcurrencyLister.ConcurrencyControls(t.Namespace).Get)
 	if err != nil {
 		log.Error(err)
 		return
@@ -400,16 +403,44 @@ func (r Sink) processTrigger(t triggersv1.Trigger, el *triggersv1.EventListener,
 	if iresp != nil && iresp.Extensions != nil {
 		extensions = iresp.Extensions
 	}
+
 	params, err := template.ResolveParams(rt, finalPayload, header, extensions)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-
 	log.Infof("ResolvedParams : %+v", params)
-	resources := template.ResolveResources(rt.TriggerTemplate, params)
 
-	if err := r.CreateResources(t.Namespace, t.Spec.ServiceAccountName, resources, t.Name, eventID, log); err != nil {
+	var cc *triggersv1.ConcurrencyControl
+	var ownerRef *metav1.OwnerReference
+	if t.Spec.Concurrency != nil {
+		if t.Spec.Concurrency.Ref != "" {
+			cc, err = r.ConcurrencyLister.ConcurrencyControls(t.Namespace).Get(t.Spec.Concurrency.Ref)
+			if err != nil {
+				log.Error(err)
+				return
+			}
+			ownerRef = &metav1.OwnerReference{
+				APIVersion: "triggers.tekton.dev/v1beta1",
+				Kind:       "ConcurrencyControl",
+				Name:       t.Spec.Concurrency.Ref,
+			}
+			log.Infof("Got concurrency control %s with key %s and strategy %s", cc.Name, cc.Spec.Key, cc.Spec.Strategy)
+		} else {
+			/*
+				cc := triggersv1.ConcurrencyControl{Spec: triggersv1.ConcurrencySpec{
+					Key: "$(params.repo-full-name)",
+				}}
+			*/
+			cc = &triggersv1.ConcurrencyControl{Spec: *t.Spec.Concurrency.Spec}
+			// TODO: create concurrency control
+		}
+	}
+
+	labels := ResolveConcurrencyLabels(cc, params)
+	log.Infof("Resolved concurrency labels: %s", labels)
+	resources := template.ResolveResources(rt.TriggerTemplate, params)
+	if err := r.CreateResources(t.Namespace, t.Spec.ServiceAccountName, resources, t.Name, eventID, labels, ownerRef, log); err != nil {
 		log.Error(err)
 		return
 	}
@@ -502,7 +533,7 @@ func (r Sink) ExecuteInterceptors(trInt []*triggersv1.TriggerInterceptor, in *ht
 	}, nil
 }
 
-func (r Sink) CreateResources(triggerNS, sa string, res []json.RawMessage, triggerName, eventID string, log *zap.SugaredLogger) error {
+func (r Sink) CreateResources(triggerNS, sa string, res []json.RawMessage, triggerName, eventID string, labels map[string]string, ownerRef *metav1.OwnerReference, log *zap.SugaredLogger) error {
 	discoveryClient := r.DiscoveryClient
 	dynamicClient := r.DynamicClient
 	var err error
@@ -520,13 +551,18 @@ func (r Sink) CreateResources(triggerNS, sa string, res []json.RawMessage, trigg
 	}
 
 	for _, rr := range res {
-		if err := resources.Create(r.Logger, rr, triggerName, eventID, r.EventListenerName, triggerNS, discoveryClient, dynamicClient); err != nil {
+		if err := resources.Create(r.Logger, rr, triggerName, eventID, r.EventListenerName, triggerNS, labels, ownerRef, discoveryClient, dynamicClient); err != nil {
 			log.Errorf("problem creating obj: %#v", err)
 			return err
 		}
 	}
 	return nil
 }
+
+/*
+func getMetadata(triggerName, eventID, elName, elNamespace string, labels map[string]string) metav1.ObjectMeta {
+
+} */
 
 // extendBodyWithExtensions merges the extensions into the given body.
 func extendBodyWithExtensions(body []byte, extensions map[string]interface{}) ([]byte, error) {

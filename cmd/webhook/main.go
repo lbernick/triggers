@@ -52,6 +52,7 @@ var types = map[schema.GroupVersionKind]resourcesemantics.GenericCRD{
 	v1beta1.SchemeGroupVersion.WithKind("TriggerBinding"):        &v1beta1.TriggerBinding{},
 	v1beta1.SchemeGroupVersion.WithKind("TriggerTemplate"):       &v1beta1.TriggerTemplate{},
 	v1beta1.SchemeGroupVersion.WithKind("Trigger"):               &v1beta1.Trigger{},
+	v1beta1.SchemeGroupVersion.WithKind("ConcurrencyControl"):    &v1beta1.ConcurrencyControl{},
 }
 
 func NewDefaultingAdmissionController(ctx context.Context, cmw configmap.Watcher) *controller.Impl {

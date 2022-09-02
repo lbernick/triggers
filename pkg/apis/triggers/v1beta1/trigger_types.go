@@ -40,6 +40,8 @@ type TriggerSpec struct {
 	// as the Trigger itself
 	// +optional
 	ServiceAccountName string `json:"serviceAccountName,omitempty"`
+	// +optional
+	Concurrency *Concurrency `json:"concurrency,omitempty"`
 }
 
 type TriggerSpecTemplate struct {
@@ -82,6 +84,15 @@ type Trigger struct {
 	// Spec holds the desired state of the Trigger
 	// +optional
 	Spec TriggerSpec `json:"spec"`
+}
+
+// Concurrency defines a reference to a ConcurrencyControl
+// TODO: one control or multiple?
+type Concurrency struct {
+	// +optional
+	Ref string `json:"ref,omitempty"`
+	// +optional
+	Spec *ConcurrencySpec `json:"spec,omitempty"`
 }
 
 // TriggerInterceptor provides a hook to intercept and pre-process events

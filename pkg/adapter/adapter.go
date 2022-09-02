@@ -29,6 +29,7 @@ import (
 
 	clusterinterceptorsinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1alpha1/clusterinterceptor"
 	clustertriggerbindingsinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/clustertriggerbinding"
+	concurrencycontrolinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/concurrencycontrol"
 	eventlistenerinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/eventlistener"
 	triggersinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/trigger"
 	triggerbindingsinformer "github.com/tektoncd/triggers/pkg/client/injection/informers/triggers/v1beta1/triggerbinding"
@@ -212,6 +213,7 @@ func (s *sinker) Start(ctx context.Context) error {
 		ClusterTriggerBindingLister: clustertriggerbindingsinformer.Get(s.injCtx).Lister(),
 		TriggerTemplateLister:       triggertemplatesinformer.Get(s.injCtx).Lister(),
 		ClusterInterceptorLister:    clusterinterceptorsinformer.Get(s.injCtx).Lister(),
+		ConcurrencyLister:           concurrencycontrolinformer.Get(s.injCtx).Lister(),
 	}
 
 	mux := http.NewServeMux()
